@@ -8,11 +8,11 @@ namespace DreamTravelWebAPI.Models
     
         public class User
         {
-            [BsonId]
-            [BsonRepresentation(BsonType.ObjectId)]
-            public string Id { get; set; }
+        [BsonId]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string Id { get; set; }
 
-            [Required]
+        [Required]
             [StringLength(12, ErrorMessage = "NIC length should be 12 characters.")]
             public string NIC { get; set; }
 

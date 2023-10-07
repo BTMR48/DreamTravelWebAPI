@@ -9,9 +9,11 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace DreamTravelWebAPI.Controllers
 {
+    
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
@@ -19,46 +21,55 @@ namespace DreamTravelWebAPI.Controllers
     {
         private readonly IUserService _userService;
         private readonly IConfiguration _config;
-
-        public UsersController(IUserService userService, IConfiguration config)
+        private readonly JwtSettings _jwtSettings;
+        public UsersController(IUserService userService, IConfiguration config, IOptions<JwtSettings> jwtSettings)
         {
             _userService = userService;
             _config = config;
+            _jwtSettings = jwtSettings.Value;
         }
 
         // Register a new user
         [AllowAnonymous]
         [HttpPost("register")]
-        public IActionResult Register([FromBody] User userParam)
+        public IActionResult Register([FromBody] User user)
         {
-            if (_userService.Exists(userParam.NIC))
+
+            if (_userService.Exists(user.NIC))
                 return BadRequest("User already exists");
 
-            _userService.HashPassword(userParam);
-            _userService.Create(userParam);
+            user.IsActive = true; // Set new users to active by default
+
+            _userService.HashPassword(user);
+             user.Id = null;
+            _userService.Create(user);
             return Ok("User successfully registered");
         }
+
+
 
         // Authenticate the user and return a JWT
         [AllowAnonymous]
         [HttpPost("login")]
-        public IActionResult Login([FromBody] User userParam)
+        public IActionResult Login([FromBody] LoginDTO loginData)
         {
-            var user = _userService.GetByNic(userParam.NIC);
-            if (user == null || !_userService.ValidatePassword(user, userParam.Password))
+            var user = _userService.GetByNic(loginData.NIC);
+            if (user == null || !_userService.ValidatePassword(user, loginData.Password))
                 return BadRequest("Username or password is incorrect");
 
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_config["JwtSettings:Key"]);
+            var key = Encoding.ASCII.GetBytes(_jwtSettings.Key);
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new Claim[]
                 {
-                    new Claim(ClaimTypes.Name, user.NIC),
-                    new Claim(ClaimTypes.Role, user.Role)
+                new Claim(ClaimTypes.Name, user.NIC),
+                new Claim(System.Security.Claims.ClaimTypes.Role, user.Role.ToString())
                 }),
                 Expires = DateTime.UtcNow.AddDays(7),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
+                Issuer = _jwtSettings.Issuer,
+                Audience = _jwtSettings.Audience
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var tokenString = tokenHandler.WriteToken(token);

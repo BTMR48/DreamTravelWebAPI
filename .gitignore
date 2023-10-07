@@ -187,3 +187,6 @@ out/
 
 # Local environment-specific settings
 appsettings.Development.json
+
+node_modules/
+npm-debug.log

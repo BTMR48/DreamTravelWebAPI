@@ -12,6 +12,7 @@ namespace DreamTravelWebAPI.Services
         void Delete(string nic);
         bool Exists(string nic);
         bool ValidatePassword(User user, string password);
+
         void HashPassword(User user);
         void Activate(string nic);
         void Deactivate(string nic);
