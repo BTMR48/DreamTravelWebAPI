@@ -1,4 +1,8 @@
-﻿namespace DreamTravelWebAPI.Models
+﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Driver;
+
+namespace DreamTravelWebAPI.Models
 {
     public class Booking
     {

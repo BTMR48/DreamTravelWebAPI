@@ -42,5 +42,25 @@ namespace DreamTravelWebAPI.Services
             user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
         }
 
+        public void Activate(string nic)
+        {
+            var user = GetByNic(nic);
+            if (user == null)
+                return;
+
+            user.IsActive = true;
+            Update(nic, user);
+        }
+
+        // Deactivate a user
+        public void Deactivate(string nic)
+        {
+            var user = GetByNic(nic);
+            if (user == null)
+                return;
+
+            user.IsActive = false;
+            Update(nic, user);
+        }
     }
 }
